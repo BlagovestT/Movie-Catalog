@@ -1,6 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import CategoryBar from './CategoryBar';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 
 const MovieList = ({ searchQuery }) => {
   const [movies, setMovies] = useState([]);
@@ -120,33 +123,24 @@ const MovieList = ({ searchQuery }) => {
                 <p>Year: {movie.release_date.slice(0, 4)}</p>
               </div>
               <div className='mt-4'>
+                {/* Conditionally render the heart icon based on whether the movie is in favorites */}
                 <button
                   onClick={() => handleAddToFavorites(movie)}
-                  className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+                  className='bg-transparent border-none cursor-pointer'
                 >
-                  Add to Favorites
+                  {favoriteMovies.some(
+                    (favMovie) => favMovie.id === movie.id
+                  ) ? (
+                    <FontAwesomeIcon icon={solidHeart} />
+                  ) : (
+                    <FontAwesomeIcon icon={regularHeart} />
+                  )}
                 </button>
               </div>
             </div>
           </div>
         ))}
       </div>
-
-      {isPopupVisible && (
-        <div className='fixed inset-0 flex items-center justify-center z-50'>
-          <div className='bg-white p-4 rounded shadow-md'>
-            <p className='text-center'>
-              You successfully added the movie to favorites!
-            </p>
-            <button
-              onClick={closePopup}
-              className='mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
