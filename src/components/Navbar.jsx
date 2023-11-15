@@ -18,7 +18,7 @@ const Navbar = ({ setSearchQuery }) => {
   return (
     <nav className='bg-blue-500 p-4 flex flex-col md:flex-row items-center justify-between'>
       <div className='text-white font-bold text-xl md:text-2xl mb-2 md:mb-0'>
-        Movie App
+        Movie Catalog
       </div>
 
       <div className='flex justify-center items-center mb-2 md:mb-0'>

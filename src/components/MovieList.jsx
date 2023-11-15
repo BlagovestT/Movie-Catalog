@@ -84,11 +84,18 @@ const MovieList = ({ searchQuery }) => {
   };
 
   const handleAddToFavorites = (movie) => {
+    // Check if the movie is already in favorites
     const isAlreadyInFavorites = favoriteMovies.some(
       (favMovie) => favMovie.id === movie.id
     );
 
-    if (!isAlreadyInFavorites) {
+    if (isAlreadyInFavorites) {
+      // If the movie is in favorites remove it
+      setFavoriteMovies((prevFavoriteMovies) =>
+        prevFavoriteMovies.filter((favMovie) => favMovie.id !== movie.id)
+      );
+    } else {
+      // If the movie is not in favorites add it
       setFavoriteMovies((prevFavoriteMovies) => [...prevFavoriteMovies, movie]);
       setPopupVisible(true);
     }
