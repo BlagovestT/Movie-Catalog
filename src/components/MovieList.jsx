@@ -1,9 +1,7 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
+import MovieCard from './MovieCard';
 import CategoryBar from './CategoryBar';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 
 const MovieList = ({ searchQuery }) => {
   const [movies, setMovies] = useState([]);
@@ -12,16 +10,13 @@ const MovieList = ({ searchQuery }) => {
   const [genreNames, setGenreNames] = useState([]);
   const observer = useRef(null);
   const [favoriteMovies, setFavoriteMovies] = useState([]);
-  const [isPopupVisible, setPopupVisible] = useState(false);
 
+  // Filter movies based on the search query
   const filteredMovies = movies.filter((movie) =>
     movie.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const closePopup = () => {
-    setPopupVisible(false);
-  };
-
+  // Fetch genre names when the component mounts
   useEffect(() => {
     const apiKey = '29fe95b697ecfe30786cffb743ae46c3';
     axios
@@ -34,26 +29,30 @@ const MovieList = ({ searchQuery }) => {
       });
   }, []);
 
-  useEffect(() => {
+  // Create a ref to store the last movie element for Intersection Observer
+  const lastMovieRef = useRef(null);
+
+  // Fetch more movies when the last movie element is intersected
+  const loadMoreMovies = () => {
     const apiKey = '29fe95b697ecfe30786cffb743ae46c3';
 
-    const loadMoreMovies = () => {
-      axios
-        .get(
-          selectedCategory
-            ? `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}&with_genres=${selectedCategory}`
-            : `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}`
-        )
-        .then((response) => {
-          setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
-          setPage(page + 1);
-        })
-        .catch((error) => {
-          console.error('Error fetching movies:', error);
-        });
-    };
+    axios
+      .get(
+        selectedCategory
+          ? `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}&with_genres=${selectedCategory}`
+          : `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}`
+      )
+      .then((response) => {
+        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
+        setPage(page + 1);
+      })
+      .catch((error) => {
+        console.error('Error fetching movies:', error);
+      });
+  };
 
-    // Create an Intersection Observer to trigger loading more movies when scrolling to the bottom
+  // Set up Intersection Observer to load more movies
+  useEffect(() => {
     observer.current = new IntersectionObserver((entries) => {
       const firstEntry = entries[0];
       if (firstEntry.isIntersecting) {
@@ -61,13 +60,9 @@ const MovieList = ({ searchQuery }) => {
       }
     });
 
-    // Observe the last movie element in the list to trigger loading more movies
-    if (movies.length > 0) {
-      observer.current.observe(document.querySelector('.movie:last-child'));
-    }
-
-    if (page === 1) {
-      loadMoreMovies();
+    // Attach the observer to the last movie element whenever movies change
+    if (lastMovieRef.current) {
+      observer.current.observe(lastMovieRef.current);
     }
 
     return () => {
@@ -75,32 +70,43 @@ const MovieList = ({ searchQuery }) => {
         observer.current.disconnect();
       }
     };
-  }, [page, selectedCategory, movies]);
+  }, [movies]);
 
+  // Handle category selection and reset movies and page
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    setMovies([]); // Clear the current movies when changing categories
-    setPage(1); // Reset the page when changing categories
+    setMovies([]);
+    setPage(1);
   };
 
+  // Handle adding and removing movies from favorites
   const handleAddToFavorites = (movie) => {
-    // Check if the movie is already in favorites
     const isAlreadyInFavorites = favoriteMovies.some(
       (favMovie) => favMovie.id === movie.id
     );
 
     if (isAlreadyInFavorites) {
-      // If the movie is in favorites remove it
       setFavoriteMovies((prevFavoriteMovies) =>
         prevFavoriteMovies.filter((favMovie) => favMovie.id !== movie.id)
       );
     } else {
-      // If the movie is not in favorites add it
       setFavoriteMovies((prevFavoriteMovies) => [...prevFavoriteMovies, movie]);
-      setPopupVisible(true);
     }
   };
 
+  // Implementing the useMemo functionality to prevent unnecessary rendering
+  const memoizedMovieCards = useMemo(() => {
+    return filteredMovies.map((movie, index) => (
+      <MovieCard
+        key={movie.id}
+        movie={movie}
+        handleAddToFavorites={handleAddToFavorites}
+        isFavorite={favoriteMovies.some((favMovie) => favMovie.id === movie.id)}
+      />
+    ));
+  }, [filteredMovies, handleAddToFavorites, favoriteMovies]);
+
+  // Store favorite movies in local storage
   useEffect(() => {
     localStorage.setItem('favoriteMovies', JSON.stringify(favoriteMovies));
   }, [favoriteMovies]);
@@ -112,41 +118,8 @@ const MovieList = ({ searchQuery }) => {
         onCategorySelect={handleCategorySelect}
       />
       <div className='grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4'>
-        {filteredMovies.map((movie, index) => (
-          <div
-            key={movie.id}
-            className={`max-w-md rounded overflow-hidden shadow-lg flex flex-col bg-white ${
-              index === filteredMovies.length - 1 ? 'movie' : ''
-            }`}
-          >
-            <img
-              src={`https://image.tmdb.org/t/p/w500/${movie.poster_path}`}
-              alt={movie.title}
-              className='w-full'
-            />
-            <div className='px-6 py-4 flex-1 flex flex-col justify-between'>
-              <div>
-                <div className='font-bold text-xl mb-2'>{movie.title}</div>
-                <p>Year: {movie.release_date.slice(0, 4)}</p>
-              </div>
-              <div className='mt-4'>
-                {/* Conditionally render the heart icon based on whether the movie is in favorites */}
-                <button
-                  onClick={() => handleAddToFavorites(movie)}
-                  className='bg-transparent border-none cursor-pointer'
-                >
-                  {favoriteMovies.some(
-                    (favMovie) => favMovie.id === movie.id
-                  ) ? (
-                    <FontAwesomeIcon icon={solidHeart} />
-                  ) : (
-                    <FontAwesomeIcon icon={regularHeart} />
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+        {memoizedMovieCards}
+        <div ref={lastMovieRef} />
       </div>
     </div>
   );
