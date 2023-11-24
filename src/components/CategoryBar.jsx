@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBars } from '@fortawesome/free-solid-svg-icons';
 
 const CategoryBar = ({ categories, onCategorySelect }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -25,7 +27,7 @@ const CategoryBar = ({ categories, onCategorySelect }) => {
           aria-haspopup='listbox'
           role='button'
         >
-          Category
+          <FontAwesomeIcon icon={faBars} className='text-2xl' />
         </button>
         {isDropdownOpen && (
           <div className='origin-top-left absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none'>

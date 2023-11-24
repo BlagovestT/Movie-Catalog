@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
+import { faCircleCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const MovieCard = ({ movie, handleAddToFavorites, isFavorite }) => {
+  const [showAddPopup, setShowAddPopup] = useState(false);
+  const [showRemovePopup, setShowRemovePopup] = useState(false);
+
+  useEffect(() => {
+    if (showAddPopup || showRemovePopup) {
+      const timeoutId = setTimeout(() => {
+        setShowAddPopup(false);
+        setShowRemovePopup(false);
+      }, 3000);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [showAddPopup, showRemovePopup]);
+
+  const handleAddToFavoritesWithPopup = (movie) => {
+    if (isFavorite) {
+      handleRemoveFromFavorites(movie);
+    } else {
+      handleAddToFavorites(movie);
+      setShowAddPopup(true);
+    }
+  };
+
+  const handleRemoveFromFavorites = (movie) => {
+    handleAddToFavorites(movie); // Assuming handleAddToFavorites also handles removal
+    setShowRemovePopup(true);
+  };
+
   return (
     <div
       id={`movie-${movie.id}`}
@@ -21,19 +50,31 @@ const MovieCard = ({ movie, handleAddToFavorites, isFavorite }) => {
         </div>
         <div className='mt-4'>
           <button
-            onClick={() => handleAddToFavorites(movie)}
+            onClick={() => handleAddToFavoritesWithPopup(movie)}
             className='bg-transparent border-none cursor-pointer'
           >
-            {isFavorite ? (
-              <FontAwesomeIcon icon={solidHeart} />
-            ) : (
-              <FontAwesomeIcon icon={regularHeart} />
-            )}
+            <FontAwesomeIcon
+              icon={isFavorite ? solidHeart : regularHeart}
+              color={isFavorite ? '#e53e3e' : '#718096'}
+            />
           </button>
         </div>
       </div>
+      {showAddPopup && (
+        <div className='fixed bottom-4 left-4 p-4 bg-green-500 text-white rounded flex items-center'>
+          <FontAwesomeIcon icon={faCircleCheck} className='mr-2' />
+          <div>{`${movie.title} was added to favorites`}</div>
+        </div>
+      )}
+      {showRemovePopup && (
+        <div className='fixed bottom-4 left-4 p-4 bg-red-500 text-white rounded flex items-center'>
+          <FontAwesomeIcon icon={faTimes} className='mr-2' />
+          <div>{`${movie.title} was removed from favorites`}</div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MovieCard;
+const MemoizedMovieCard = memo(MovieCard);
+export default MemoizedMovieCard;

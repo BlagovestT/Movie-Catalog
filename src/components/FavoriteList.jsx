@@ -17,8 +17,10 @@ const FavoriteList = () => {
       (movie) => movie.id !== movieId
     );
     setFavoriteMovies(updatedFavoriteMovies);
+    updateLocalStorage(updatedFavoriteMovies);
+  };
 
-    // Update local storage
+  const updateLocalStorage = (updatedFavoriteMovies) => {
     localStorage.setItem(
       'favoriteMovies',
       JSON.stringify(updatedFavoriteMovies)
