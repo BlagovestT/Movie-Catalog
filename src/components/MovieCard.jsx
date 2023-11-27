@@ -4,9 +4,23 @@ import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 import { faCircleCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const MovieCard = ({ movie, handleAddToFavorites, isFavorite }) => {
+const MovieCard = ({ movie, handleAddToFavorites }) => {
+  const [isFavorite, setIsFavorite] = useState(false);
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showRemovePopup, setShowRemovePopup] = useState(false);
+
+  useEffect(() => {
+    // Check if the movie is in the favorites list stored in local storage
+    const storedFavoriteMovies =
+      JSON.parse(localStorage.getItem('favoriteMovies')) || [];
+
+    const movieIsFavorite = storedFavoriteMovies.some(
+      (favMovie) => favMovie.id === movie.id
+    );
+
+    // Set the isFavorite state accordingly
+    setIsFavorite(movieIsFavorite);
+  }, [movie.id]);
 
   useEffect(() => {
     if (showAddPopup || showRemovePopup) {
@@ -24,12 +38,13 @@ const MovieCard = ({ movie, handleAddToFavorites, isFavorite }) => {
       handleRemoveFromFavorites(movie);
     } else {
       handleAddToFavorites(movie);
-      setShowAddPopup(true);
     }
+    setIsFavorite(!isFavorite);
+    setShowAddPopup(!isFavorite);
   };
 
   const handleRemoveFromFavorites = (movie) => {
-    handleAddToFavorites(movie); // Assuming handleAddToFavorites also handles removal
+    handleAddToFavorites(movie);
     setShowRemovePopup(true);
   };
 
@@ -77,4 +92,4 @@ const MovieCard = ({ movie, handleAddToFavorites, isFavorite }) => {
 };
 
 const MemoizedMovieCard = memo(MovieCard);
-export default MemoizedMovieCard;
+export default MovieCard;

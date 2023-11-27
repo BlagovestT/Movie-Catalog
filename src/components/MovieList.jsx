@@ -35,16 +35,21 @@ const MovieList = ({ searchQuery }) => {
   // Create a ref to store the last movie element for Intersection Observer
   const lastMovieRef = useRef(null);
 
-  // Fetch more movies when the last movie element is intersected
-  const loadMoreMovies = () => {
+  // Fetch movies based on the search query and category
+  const fetchMovies = () => {
     const apiKey = process.env.REACT_APP_API_KEY;
+    let apiUrl = '';
+
+    if (selectedCategory) {
+      apiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}&with_genres=${selectedCategory}`;
+    } else if (searchQuery) {
+      apiUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}`;
+    } else {
+      apiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}`;
+    }
 
     axios
-      .get(
-        selectedCategory
-          ? `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}&with_genres=${selectedCategory}`
-          : `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}`
-      )
+      .get(apiUrl)
       .then((response) => {
         setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
         setPage(page + 1);
@@ -59,7 +64,7 @@ const MovieList = ({ searchQuery }) => {
     observer.current = new IntersectionObserver((entries) => {
       const firstEntry = entries[0];
       if (firstEntry.isIntersecting) {
-        loadMoreMovies();
+        fetchMovies();
       }
     });
 
@@ -73,7 +78,7 @@ const MovieList = ({ searchQuery }) => {
         observer.current.disconnect();
       }
     };
-  }, [movies]);
+  }, [movies, fetchMovies]);
 
   // Scroll-to-top functionality
   const scrollToTop = () => {
