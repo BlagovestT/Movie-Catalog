@@ -2,12 +2,18 @@ import React, { memo, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
-import { faCircleCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+  faEye,
+  faCircleCheck,
+  faTimes,
+} from '@fortawesome/free-solid-svg-icons';
+import MovieModal from './MovieModal';
 
 const MovieCard = ({ movie, handleAddToFavorites }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showRemovePopup, setShowRemovePopup] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     // Check if the movie is in the favorites list stored in local storage
@@ -48,6 +54,14 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
     setShowRemovePopup(true);
   };
 
+  const openModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
   return (
     <div
       id={`movie-${movie.id}`}
@@ -73,6 +87,16 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
               color={isFavorite ? '#e53e3e' : '#718096'}
             />
           </button>
+          <button
+            onClick={openModal}
+            className='bg-transparent border-none cursor-pointer ml-2'
+          >
+            <FontAwesomeIcon
+              icon={faEye}
+              className='ease-in-out hover:text-blue-500'
+              color='#718096'
+            />
+          </button>
         </div>
       </div>
       {showAddPopup && (
@@ -87,6 +111,7 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
           <div>{`${movie.title} was removed from favorites`}</div>
         </div>
       )}
+      {isModalOpen && <MovieModal movie={movie} onClose={closeModal} />}
     </div>
   );
 };
