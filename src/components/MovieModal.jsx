@@ -1,11 +1,11 @@
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faStar } from '@fortawesome/free-regular-svg-icons';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 
 const MovieModal = ({ movie, onClose }) => {
   return (
     <div className='fixed inset-0 flex items-center justify-center overflow-y-auto p-4'>
-      <div className='relative p-8 bg-white max-w-md rounded-lg shadow-lg'>
+      <div className='relative p-8 bg-slate-50 max-w-md rounded-lg shadow-lg'>
         <img
           src={`https://image.tmdb.org/t/p/w500/${movie.poster_path}`}
           alt={movie.title}

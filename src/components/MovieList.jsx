@@ -1,9 +1,16 @@
+// src/components/MovieList.js
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
 import MemoizedMovieCard from './MovieCard';
 import CategoryBar from './CategoryBar';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import {
+  fetchGenreNames,
+  fetchMoviesByCategory,
+  fetchAllMovies,
+  fetchMoviesBySearch,
+} from '../services/movieListService';
 
 const MovieList = ({ searchQuery }) => {
   const [movies, setMovies] = useState([]);
@@ -22,8 +29,8 @@ const MovieList = ({ searchQuery }) => {
   // Fetch genre names when the component mounts
   useEffect(() => {
     const apiKey = process.env.REACT_APP_API_KEY;
-    axios
-      .get(`https://api.themoviedb.org/3/genre/movie/list?api_key=${apiKey}`)
+
+    fetchGenreNames(apiKey)
       .then((response) => {
         setGenreNames(response.data.genres);
       })
@@ -35,28 +42,39 @@ const MovieList = ({ searchQuery }) => {
   // Create a ref to store the last movie element for Intersection Observer
   const lastMovieRef = useRef(null);
 
-  // Fetch movies based on the search query and category
-  const fetchMovies = () => {
+  // Fetch movies based on the search query, category, or all movies
+  const fetchMoviesData = () => {
     const apiKey = process.env.REACT_APP_API_KEY;
-    let apiUrl = '';
 
     if (selectedCategory) {
-      apiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}&with_genres=${selectedCategory}`;
+      fetchMoviesByCategory(apiKey, page, selectedCategory)
+        .then((response) => {
+          setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
+          setPage(page + 1);
+        })
+        .catch((error) => {
+          console.error('Error fetching movies:', error);
+        });
     } else if (searchQuery) {
-      apiUrl = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${searchQuery}`;
+      // Fetch movies by search query
+      fetchMoviesBySearch(apiKey, searchQuery)
+        .then((response) => {
+          setMovies(response.data.results);
+        })
+        .catch((error) => {
+          console.error('Error fetching movies:', error);
+        });
     } else {
-      apiUrl = `https://api.themoviedb.org/3/discover/movie?api_key=${apiKey}&page=${page}`;
+      // Fetch all movies
+      fetchAllMovies(apiKey, page)
+        .then((response) => {
+          setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
+          setPage(page + 1);
+        })
+        .catch((error) => {
+          console.error('Error fetching movies:', error);
+        });
     }
-
-    axios
-      .get(apiUrl)
-      .then((response) => {
-        setMovies((prevMovies) => [...prevMovies, ...response.data.results]);
-        setPage(page + 1);
-      })
-      .catch((error) => {
-        console.error('Error fetching movies:', error);
-      });
   };
 
   // Set up Intersection Observer to load more movies
@@ -64,11 +82,10 @@ const MovieList = ({ searchQuery }) => {
     observer.current = new IntersectionObserver((entries) => {
       const firstEntry = entries[0];
       if (firstEntry.isIntersecting) {
-        fetchMovies();
+        fetchMoviesData();
       }
     });
 
-    // Attach the observer to the last movie element whenever movies change
     if (lastMovieRef.current) {
       observer.current.observe(lastMovieRef.current);
     }
@@ -78,7 +95,7 @@ const MovieList = ({ searchQuery }) => {
         observer.current.disconnect();
       }
     };
-  }, [movies, fetchMovies]);
+  }, [movies, fetchMoviesData]);
 
   // Scroll-to-top functionality
   const scrollToTop = () => {

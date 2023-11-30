@@ -1,33 +1,41 @@
-import React, { memo, useState, useEffect } from 'react';
+// src/components/MovieCard.js
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart as solidHeart } from '@fortawesome/free-solid-svg-icons';
-import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 import {
+  faHeart as solidHeart,
   faEye,
   faCircleCheck,
   faTimes,
 } from '@fortawesome/free-solid-svg-icons';
+import { faHeart as regularHeart } from '@fortawesome/free-regular-svg-icons';
 import MovieModal from './MovieModal';
+import { checkForMovieChanges } from '../services/movieCardService';
 
 const MovieCard = ({ movie, handleAddToFavorites }) => {
+  // State for tracking whether the movie is a favorite, show add and remove popups, and modal visibility
   const [isFavorite, setIsFavorite] = useState(false);
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showRemovePopup, setShowRemovePopup] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Effect to check if the movie is initially a favorite and if it has changes
   useEffect(() => {
-    // Check if the movie is in the favorites list stored in local storage
     const storedFavoriteMovies =
       JSON.parse(localStorage.getItem('favoriteMovies')) || [];
 
-    const movieIsFavorite = storedFavoriteMovies.some(
+    const movieInFavorites = storedFavoriteMovies.find(
       (favMovie) => favMovie.id === movie.id
     );
 
-    // Set the isFavorite state accordingly
-    setIsFavorite(movieIsFavorite);
+    setIsFavorite(!!movieInFavorites);
+
+    // Check for changes when the movie is initially loaded
+    if (movieInFavorites) {
+      checkForMovieChanges(movieInFavorites.id);
+    }
   }, [movie.id]);
 
+  // Effect to automatically close add and remove popups after 3 seconds
   useEffect(() => {
     if (showAddPopup || showRemovePopup) {
       const timeoutId = setTimeout(() => {
@@ -39,6 +47,7 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
     }
   }, [showAddPopup, showRemovePopup]);
 
+  // Function to check for movie changes and handle accordingly
   const handleAddToFavoritesWithPopup = (movie) => {
     if (isFavorite) {
       handleRemoveFromFavorites(movie);
@@ -49,15 +58,18 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
     setShowAddPopup(!isFavorite);
   };
 
+  // Function to handle removing a movie from favorites
   const handleRemoveFromFavorites = (movie) => {
     handleAddToFavorites(movie);
     setShowRemovePopup(true);
   };
 
+  // Function to open the modal
   const openModal = () => {
     setIsModalOpen(true);
   };
 
+  // Function to close the modal
   const closeModal = () => {
     setIsModalOpen(false);
   };
@@ -116,5 +128,4 @@ const MovieCard = ({ movie, handleAddToFavorites }) => {
   );
 };
 
-const MemoizedMovieCard = memo(MovieCard);
 export default MovieCard;
