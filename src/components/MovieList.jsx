@@ -1,10 +1,17 @@
-// src/components/MovieList.js
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import axios from 'axios';
-import MemoizedMovieCard from './MovieCard';
-import CategoryBar from './CategoryBar';
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+  useCallback,
+  useContext, // Import useContext
+} from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import MemoizedMovieCard from './MovieCard';
+import CategoryBar from './CategoryBar';
+import FavoritesContext from '../context/FavoritesContext'; // Update import statement
+
 import {
   fetchGenreNames,
   fetchMoviesByCategory,
@@ -18,8 +25,11 @@ const MovieList = ({ searchQuery }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [genreNames, setGenreNames] = useState([]);
   const observer = useRef(null);
-  const [favoriteMovies, setFavoriteMovies] = useState([]);
   const [showScrollButton, setShowScrollButton] = useState(false);
+
+  // Accessing favorites context
+  const { favoriteMovies, handleAddToFavorites, updateLocalStorage } =
+    useContext(FavoritesContext);
 
   // Filter movies based on the search query
   const filteredMovies = movies.filter((movie) =>
@@ -43,7 +53,7 @@ const MovieList = ({ searchQuery }) => {
   const lastMovieRef = useRef(null);
 
   // Fetch movies based on the search query, category, or all movies
-  const fetchMoviesData = () => {
+  const fetchMoviesData = useCallback(() => {
     const apiKey = process.env.REACT_APP_API_KEY;
 
     if (selectedCategory) {
@@ -75,7 +85,7 @@ const MovieList = ({ searchQuery }) => {
           console.error('Error fetching movies:', error);
         });
     }
-  };
+  }, [selectedCategory, page, searchQuery]);
 
   // Set up Intersection Observer to load more movies
   useEffect(() => {
@@ -95,7 +105,7 @@ const MovieList = ({ searchQuery }) => {
         observer.current.disconnect();
       }
     };
-  }, [movies, fetchMoviesData]);
+  }, [fetchMoviesData]);
 
   // Scroll-to-top functionality
   const scrollToTop = () => {
@@ -122,35 +132,6 @@ const MovieList = ({ searchQuery }) => {
     setSelectedCategory(category);
     setMovies([]);
     setPage(1);
-  };
-
-  // Handle adding and removing movies from favorites
-  const handleAddToFavorites = (movie) => {
-    const storedFavoriteMovies =
-      JSON.parse(localStorage.getItem('favoriteMovies')) || [];
-
-    const isAlreadyInFavorites = storedFavoriteMovies.some(
-      (favMovie) => favMovie.id === movie.id
-    );
-
-    if (isAlreadyInFavorites) {
-      const updatedFavoriteMovies = storedFavoriteMovies.filter(
-        (favMovie) => favMovie.id !== movie.id
-      );
-      setFavoriteMovies(updatedFavoriteMovies);
-      updateLocalStorage(updatedFavoriteMovies);
-    } else {
-      const updatedFavoriteMovies = [...storedFavoriteMovies, movie];
-      setFavoriteMovies(updatedFavoriteMovies);
-      updateLocalStorage(updatedFavoriteMovies);
-    }
-  };
-
-  const updateLocalStorage = (updatedFavoriteMovies) => {
-    localStorage.setItem(
-      'favoriteMovies',
-      JSON.stringify(updatedFavoriteMovies)
-    );
   };
 
   // Implementing the useMemo functionality to prevent unnecessary rendering
